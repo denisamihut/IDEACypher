@@ -5,6 +5,7 @@ package com.davidmiguel.idea_cipher.crypto;
  *
  * Based on http://www.source-code.biz/idea/java
  */
+// Efectiv algoritmul de criptare IDEA
 public class IdeaCipher extends BlockCipher {
 
     private static final int KEY_SIZE = 16;

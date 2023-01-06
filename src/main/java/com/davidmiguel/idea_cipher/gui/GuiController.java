@@ -13,9 +13,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert.AlertType;
 import javafx.stage.FileChooser;
 
-/**
- * Controller for the GUI.
- */
+// Aici gasim tot ceea ce tine de interfata grafica
+//Metode handler ale butoanelor, a casutelor de selectare si a formularelor de inserare a fisierelor
+
 public class GuiController {
 
     @FXML

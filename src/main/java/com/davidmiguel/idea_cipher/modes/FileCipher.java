@@ -14,16 +14,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 
-/**
- * Encrypts or decrypts a files with different modes of operation.
- *
- * Based on http://www.source-code.biz/idea/java
- */
+//Codul a fost baza pe http://www.source-code.biz/idea/java
 public class FileCipher extends Task<Void> {
-
     private static final Logger logger = LoggerFactory.getLogger(FileCipher.class);
     private static final int BLOCK_SIZE = 8;
-
     private String input;
     private String output;
     private String key;
@@ -31,6 +25,7 @@ public class FileCipher extends Task<Void> {
     private OperationMode.Mode mode;
     private StringProperty status; // To print messages in status box
 
+    //am declarat fisierul care va fi criptat cu parametri aferenti
     public FileCipher(String input, String output, String key, boolean encrypt, OperationMode.Mode mode) {
         this.input = input;
         this.output = output;
@@ -44,39 +39,34 @@ public class FileCipher extends Task<Void> {
         return status;
     }
 
-    /**
-     * Encrypts / decrypts file.
-     */
+  //Operatia de criptare si de decriptare
     private void cryptFile() throws IOException {
-        // Open input / output FileChannels
+        // deschidem cele doua fisiere de iesire/intrare cu care vom lucra
+
         try (FileChannel inChannel = FileChannel.open(Paths.get(input), StandardOpenOption.READ);
              FileChannel outChannel = FileChannel.open(Paths.get(output), StandardOpenOption.CREATE,
                      StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
-            // Select mode of operation
+            // Selectam modul de operare, in cazul nostru CBC
             OperationMode opMod;
             switch (mode) {
-
                 case CBC:
+                    //Declaram un obiect avand ca si parametri modul de executie implicit si cheia pe care am introdus-o
                     opMod = new CBC(encrypt, key);
                     break;
-
-
                 default:
+                    //In caz de adaugare fisier gresit, afisam urmatorul mesaj
                     throw new IllegalArgumentException("Incorrect mode of operation.");
             }
-            logger.debug(encrypt ? "Encrypting..." : "Decrypting...");
-            logger.debug("Mode: " + mode.toString());
-            status.setValue((encrypt ? "Encrypting" : "Decrypting") + " file with " + mode.toString() + " mode.");
 
-            // Check and compute sizes of data
+            // Verificam daca fiseirul nostru are date
             long inFileSize = inChannel.size(); // Input file size (bytes)
             long inDataLen, outDataLen; // Input and output data size (bytes)
+            //Daca verificarea s-a facut cu succesm adica daca fisierul are date de criptat se va face operatia de criptare
             if (encrypt) {
                 inDataLen = inFileSize; // Input data size = input file size
                 outDataLen = (inDataLen + BLOCK_SIZE - 1) / BLOCK_SIZE * BLOCK_SIZE; // Closest upper multiple of blockSize
-                logger.debug("Sizes: " + inDataLen + "b input, " + (outDataLen + BLOCK_SIZE) + "b output");
-                status.setValue("Input size: " + inDataLen / 1024 + "KB.");
+                // Daca verificarea nu s-a facut cu succes, inseamna ca fisierul este gol si se va afisa urmatorul mesaj
             } else {
                 if (inFileSize == 0) {
                     throw new IOException("Input file is empty.");
@@ -85,25 +75,18 @@ public class FileCipher extends Task<Void> {
                 }
                 inDataLen = inFileSize - BLOCK_SIZE; // Last block is the data size (encrypted)
                 outDataLen = inDataLen;
-                logger.debug("Sizes: " + (inDataLen + BLOCK_SIZE) + "b input, <=" + outDataLen  + "b output");
-                status.setValue("Input size: " + (inDataLen + BLOCK_SIZE) / 1024 + "KB.");
             }
 
-            // Encrypt / decrypt data
-            status.setValue("Running IDEA...");
+            // Criptare/decriptare efectiva a datelor
             long t0 = System.currentTimeMillis();
             processData(inChannel, inDataLen, outChannel, outDataLen, opMod);
             long tf = (System.currentTimeMillis() - t0);
-            status.setValue((encrypt ? "Encryption" : "Decryption") + " finished (" + tf + "ms).");
 
             // Write / read lenght of the data
             if (encrypt) {
-                status.setValue("Attaching file size encrypted...");
                 // Add encrypted data length in an encrypted block at the end of the output file
                 writeDataLength(outChannel, inDataLen, opMod);
-                status.setValue("Output size: " + inDataLen / 1024 + "KB.");
             } else {
-                status.setValue("Checking file size...");
                 // Read encrypted data length
                 long dataSize = readDataLength(inChannel, opMod);
                 // Check if it is coherent
@@ -122,16 +105,14 @@ public class FileCipher extends Task<Void> {
         }
     }
 
-    /**
-     * Read the input file in chunks of 2MB, encrypt/decrypt the chunks and write it in the output file.
-     */
+  // procesarea datelor pentru cele doua prelucrari
     private void processData(FileChannel inChannel, long inDataLen, FileChannel outChannel, long outDataLen,
                                     OperationMode opMod) throws IOException {
         final int bufSize = 0x200000; // 2MB of buffer
         ByteBuffer buf = ByteBuffer.allocate(bufSize);
         long filePos = 0;
         while (filePos < inDataLen) {
-            // Set progess
+            // raportam progresul in bara de progres
             updateProgress(filePos, inDataLen);
             // Read from input file into the buffer
             int bytesToRead = (int) Math.min(inDataLen - filePos, bufSize);
@@ -147,7 +128,7 @@ public class FileCipher extends Task<Void> {
             for (int pos = 0; pos < chunkLen; pos += BLOCK_SIZE) {
                 opMod.crypt(buf.array(), pos); // Encrypt chunk with chosen operation mode
             }
-            // Write buffer to output file
+
             int bytesToWrite = (int) Math.min(outDataLen - filePos, chunkLen);
             buf.limit(bytesToWrite);
             buf.position(0);
@@ -159,11 +140,9 @@ public class FileCipher extends Task<Void> {
         }
     }
 
-    /**
-     * Write the length of the encrypted data in an encrypted block at the end of the file.
-     * The length is package is a 8-byte block, this block is encrypted and finally added at the end
-     * of output file.
-     */
+//scriem lungimea datelor criptate într-un bloc criptat la sfârșitul fișierului.
+            // Lungimea pachetului este un bloc de 8 octeți, acest bloc este criptat și adăugat în final la sfârșit
+     // din fișierul de ieșire.
     private void writeDataLength(FileChannel outChannel, long dataLength, OperationMode opMod)
             throws IOException {
         // Package the dataLength into an 8-byte block
@@ -178,11 +157,11 @@ public class FileCipher extends Task<Void> {
         }
     }
 
-    /**
-     * Get the length of the data that was encrypted.
-     * This data is saved encrypted in the last block of the cryptogram.
-     * Read the last block of the file, decrypt block and unpackage data lenght.
-     */
+
+     //Obtinem lungimea datelor care au fost criptate.
+     //Aceste date sunt salvate criptate în ultimul bloc al criptogramei.
+     //Se citeste ultimul bloc al fișierului, il decriptam
+
     private long readDataLength(FileChannel channel, OperationMode opMod) throws IOException {
         // Get last block
         ByteBuffer buf = ByteBuffer.allocate(BLOCK_SIZE);

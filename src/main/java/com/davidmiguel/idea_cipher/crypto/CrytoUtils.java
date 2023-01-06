@@ -1,5 +1,5 @@
 package com.davidmiguel.idea_cipher.crypto;
-
+// unele metode utile pentru criptare
 public class CrytoUtils {
     /**
      * Turn a string into a key of the given length.

@@ -14,7 +14,7 @@ public class MainApp extends Application{
     public void start(Stage primaryStage) throws Exception {
         final Parent root = FXMLLoader.load(getClass().getResource("/fxml/gui.fxml"));
         final Scene scene = new Scene(root);
-        primaryStage.setTitle("IDEA cipher");
+        primaryStage.setTitle("Algoritmul IDEA");
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
         primaryStage.sizeToScene();
