@@ -153,12 +153,12 @@
                    <GridPane.margin>
                        <Insets left="10.0"/>
                    </GridPane.margin>
-                   <RadioButton fx:id="encrypt" mnemonicParsing="false" selected="true" text="Encrypt">
+                   <RadioButton fx:id="encrypt" mnemonicParsing="false" selected="true" text="Criptare">
                        <toggleGroup>
                            <ToggleGroup fx:id="operation"/>
                        </toggleGroup>
                    </RadioButton>
-                   <RadioButton fx:id="decrypt" mnemonicParsing="false" text="Decrypt"
+                   <RadioButton fx:id="decrypt" mnemonicParsing="false" text="Decriptare"
                                 toggleGroup="$operation"/>
                </VBox>
                <HBox GridPane.columnIndex="1" GridPane.rowIndex="1">
